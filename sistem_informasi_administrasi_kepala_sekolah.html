@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Informasi Administrasi Kepala Sekolah (SI-AKS)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom Theme & Style Override -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased flex flex-col min-h-screen">
+
+    <!-- TOP NAV BAR -->
+    <header class="bg-brand-900 text-white sticky top-0 z-30 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo & Brand -->
+                <div class="flex items-center space-x-3">
+                    <button id="mobileMenuBtn" class="md:hidden p-2 rounded-md hover:bg-brand-800 focus:outline-none">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                    <div class="bg-white text-brand-900 p-2 rounded-lg font-bold text-lg flex items-center justify-center w-10 h-10 shadow">
+                        <i class="fa-solid fa-graduation-cap text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg leading-none">SI-AKS Digital</h1>
+                        <p class="text-xs text-brand-100">Portal Administrasi Kepala Sekolah</p>
+                    </div>
+                </div>
+
+                <!-- Right Menu: Quick Actions & Profile -->
+                <div class="flex items-center space-x-3">
+                    <button onclick="exportAllData()" title="Backup Semua Data" class="bg-brand-800 hover:bg-brand-700 text-xs sm:text-sm px-3 py-1.5 rounded-lg flex items-center space-x-1 border border-brand-700 transition">
+                        <i class="fa-solid fa-download"></i>
+                        <span class="hidden sm:inline">Backup Data</span>
+                    </button>
+                    <label title="Restore Data" class="bg-brand-800 hover:bg-brand-700 text-xs sm:text-sm px-3 py-1.5 rounded-lg flex items-center space-x-1 border border-brand-700 cursor-pointer transition">
+                        <i class="fa-solid fa-upload"></i>
+                        <span class="hidden sm:inline">Restore</span>
+                        <input type="file" id="importFile" class="hidden" accept=".json" onchange="importAllData(event)">
+                    </label>
+                    <div class="h-6 w-px bg-brand-700 hidden sm:block"></div>
+                    <div class="flex items-center space-x-2 bg-brand-800/60 px-3 py-1 rounded-full border border-brand-700">
+                        <i class="fa-solid fa-user-gear text-brand-100 text-sm"></i>
+                        <span class="text-xs sm:text-sm font-medium" id="headerHeadmasterName">Kepala Sekolah</span>
+                    </div>
+                    <button onclick="logout()" title="Keluar Aplikasi" class="bg-rose-700 hover:bg-rose-800 text-xs px-2.5 py-1.5 rounded-lg flex items-center space-x-1 border border-rose-600 transition">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                        <span class="hidden sm:inline">Keluar</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- OVERLAY HALAMAN LOGIN -->
+    <div id="loginScreen" class="fixed inset-0 z-50 bg-slate-900 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 sm:p-8 shadow-2xl relative border border-slate-100">
+            <div class="text-center mb-6">
+                <div class="bg-brand-900 text-white w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg">
+                    <i class="fa-solid fa-graduation-cap text-3xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-800">Masuk SI-AKS</h2>
+                <p class="text-xs text-slate-500 mt-1">Sistem Informasi Administrasi Kepala Sekolah</p>
+                <div class="mt-2 inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium bg-emerald-100 text-emerald-800">
+                    <i class="fa-solid fa-wifi-slash mr-1.5"></i> Siap Digunakan Offline (Tanpa Internet)
+                </div>
+            </div>
+
+            <form id="formLogin" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Nama Lengkap (Username)</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-user absolute left-3 top-3 text-slate-400 text-sm"></i>
+                        <input type="text" id="loginUsername" required placeholder="Masukkan Nama Lengkap" class="w-full pl-9 pr-3 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">NIP (Password)</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-lock absolute left-3 top-3 text-slate-400 text-sm"></i>
+                        <input type="password" id="loginPassword" required placeholder="Masukkan NIP Anda" class="w-full pl-9 pr-3 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+                </div>
+
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 text-[11px] text-slate-500 flex items-start space-x-2">
+                    <i class="fa-solid fa-circle-info text-brand-600 text-xs mt-0.5"></i>
+                    <div>
+                        <span class="font-semibold text-slate-700">Akun Default / Bawaan:</span><br>
+                        • Username: <span class="font-mono text-brand-700 font-semibold" id="defaultUserHint">Dr. H. Ahmad Wijaya, M.Pd.</span><br>
+                        • Password (NIP): <span class="font-mono text-brand-700 font-semibold" id="defaultPassHint">19750812 200003 1 004</span><br>
+                        *(Dapat diubah pada menu Profil & Sekolah)*
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-xl text-sm shadow-md transition flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    <span>Masuk ke Aplikasi</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN BODY CONTAINER -->
+    <div class="flex-1 flex max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 gap-6">
+
+        <!-- SIDEBAR NAVIGATION (Desktop & Mobile Drawer) -->
+        <aside id="sidebar" class="fixed inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 transition duration-200 ease-in-out z-40 w-64 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col p-4 shrink-0 h-fit md:h-auto">
+            <div class="flex items-center justify-between pb-4 mb-2 border-b border-slate-100 md:hidden">
+                <span class="font-bold text-slate-700">Menu Utama</span>
+                <button id="closeMobileMenu" class="text-slate-500 hover:text-slate-800">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <nav class="space-y-1" id="navContainer">
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition bg-brand-50 text-brand-700">
+                    <i class="fa-solid fa-chart-line w-5 text-center"></i>
+                    <span>Dashboard Utama</span>
+                </button>
+
+                <button onclick="switchTab('supervisi')" id="nav-supervisi" class="nav-item w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-600 hover:bg-slate-50 hover:text-slate-900">
+                    <i class="fa-solid fa-user-check w-5 text-center"></i>
+                    <span>Supervisi Guru</span>
+                </button>
+
+                <button onclick="switchTab('surat')" id="nav-surat" class="nav-item w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-600 hover:bg-slate-50 hover:text-slate-900">
+                    <i class="fa-solid fa-envelope-open-text w-5 text-center"></i>
+                    <span>Surat Masuk / Keluar</span>
+                </button>
+
+                <button onclick="switchTab('program')" id="nav-program" class="nav-item w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-600 hover:bg-slate-50 hover:text-slate-900">
+                    <i class="fa-solid fa-list-check w-5 text-center"></i>
+                    <span>Program Kerja (RKAS)</span>
+                </button>
+
+                <button onclick="switchTab('agenda')" id="nav-agenda" class="nav-item w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-600 hover:bg-slate-50 hover:text-slate-900">
+                    <i class="fa-solid fa-calendar-days w-5 text-center"></i>
+                    <span>Agenda & Jadwal</span>
+                </button>
+
+                <button onclick="switchTab('arsip')" id="nav-arsip" class="nav-item w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-600 hover:bg-slate-50 hover:text-slate-900">
+                    <i class="fa-solid fa-box-archive w-5 text-center"></i>
+                    <span>Arsip Dokumen (DB)</span>
+                </button>
+
+                <button onclick="switchTab('pengaturan')" id="nav-pengaturan" class="nav-item w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-600 hover:bg-slate-50 hover:text-slate-900">
+                    <i class="fa-solid fa-sliders w-5 text-center"></i>
+                    <span>Profil Sekolah & User</span>
+                </button>
+            </nav>
+
+            <div class="mt-auto pt-4 border-t border-slate-100 text-xs text-slate-400 text-center">
+                <p>Database & Session: <span id="dbStatus" class="font-semibold text-emerald-600">Offline Ready</span></p>
+                <p class="mt-1">SI-AKS v2.5 Mobile Ready</p>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT AREA -->
+        <main class="flex-1 min-w-0">
+
+            <!-- 1. DASHBOARD VIEW -->
+            <section id="view-dashboard" class="space-y-6">
+                <!-- Welcome Banner -->
+                <div class="bg-gradient-to-r from-brand-800 to-brand-600 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
+                    <div class="relative z-10">
+                        <h2 class="text-2xl font-bold mb-1" id="welcomeHeading">Selamat Datang, Bapak/Ibu Kepala Sekolah</h2>
+                        <p class="text-brand-100 text-sm max-w-2xl">Kelola administrasi, supervisi, serta pengarsipan dokumen sekolah secara efisien dan mandiri dari perangkat apapun.</p>
+                        <div class="mt-4 flex flex-wrap gap-3">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/20 backdrop-blur-sm text-white">
+                                <i class="fa-solid fa-school mr-1.5"></i> <span id="dashSchoolName">SDN Nusantara 01</span>
+                            </span>
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/20 backdrop-blur-sm text-white">
+                                <i class="fa-solid fa-calendar-alt mr-1.5"></i> Tahun Ajaran: 2026/2027
+                            </span>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-building-columns text-white/10 text-9xl absolute -right-4 -bottom-6 pointer-events-none"></i>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Supervisi Guru</p>
+                            <h3 class="text-2xl font-bold text-slate-800 mt-1" id="statSupervisi">0</h3>
+                            <p class="text-xs text-emerald-600 mt-1"><i class="fa-solid fa-check mr-1"></i>Tersimpan</p>
+                        </div>
+                        <div class="w-12 h-12 bg-blue-50 text-brand-600 rounded-xl flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-user-graduate"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Surat Masuk/Keluar</p>
+                            <h3 class="text-2xl font-bold text-slate-800 mt-1" id="statSurat">0</h3>
+                            <p class="text-xs text-brand-600 mt-1"><i class="fa-solid fa-file-lines mr-1"></i>Ter-agenda</p>
+                        </div>
+                        <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-envelope"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Program RKAS</p>
+                            <h3 class="text-2xl font-bold text-slate-800 mt-1" id="statProgram">0</h3>
+                            <p class="text-xs text-indigo-600 mt-1"><i class="fa-solid fa-tasks mr-1"></i>Kegiatan</p>
+                        </div>
+                        <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-list-check"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">File & Document</p>
+                            <h3 class="text-2xl font-bold text-slate-800 mt-1" id="statFile">0</h3>
+                            <p class="text-xs text-purple-600 mt-1"><i class="fa-solid fa-database mr-1"></i>Storage Lokal</p>
+                        </div>
+                        <div class="w-12 h-12 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-folder-open"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts & Activity Row -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Chart Supervisi -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm lg:col-span-2">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-slate-800 text-base">Grafik Nilai Supervisi Akademik</h3>
+                            <span class="text-xs bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full">Tahun Ini</span>
+                        </div>
+                        <div class="h-64">
+                            <canvas id="chartSupervisiCanvas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Agenda Terdekat -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-slate-800 text-base">Agenda Mendatang</h3>
+                            <button onclick="switchTab('agenda')" class="text-xs text-brand-600 hover:underline">Lihat Semua</button>
+                        </div>
+                        <div id="dashAgendaList" class="flex-1 space-y-3 overflow-y-auto max-h-64 pr-1">
+                            <!-- Items injected via JS -->
+                            <p class="text-xs text-slate-400 italic">Belum ada agenda terdekat.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. SUPERVISI GURU VIEW -->
+            <section id="view-supervisi" class="hidden space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800">Supervisi Akademik & Pembelajaran</h2>
+                        <p class="text-xs text-slate-500">Pencatatan dan penilaian kinerja mengajar guru</p>
+                    </div>
+                    <button onclick="openModalSupervisi()" class="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition w-full sm:w-auto justify-center">
+                        <i class="fa-solid fa-plus"></i> Tambah Hasil Supervisi
+                    </button>
+                </div>
+
+                <!-- Table / Card List -->
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="p-4 border-b border-slate-100 flex flex-col sm:flex-row gap-3 justify-between">
+                        <input type="text" id="searchSupervisi" onkeyup="renderSupervisi()" placeholder="Cari nama guru / mata pelajaran..." class="px-3 py-2 border rounded-lg text-sm w-full sm:w-64 focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm text-slate-600">
+                            <thead class="bg-slate-50 text-slate-700 text-xs uppercase font-semibold">
+                                <tr>
+                                    <th class="p-4">Tanggal</th>
+                                    <th class="p-4">Nama Guru</th>
+                                    <th class="p-4">Mapel / Kelas</th>
+                                    <th class="p-4">Skor / Predikat</th>
+                                    <th class="p-4">Catatan KS</th>
+                                    <th class="p-4 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableSupervisiBody" class="divide-y divide-slate-100">
+                                <!-- Dynamic Items -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. SURAT MASUK & KELUAR VIEW -->
+            <section id="view-surat" class="hidden space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800">Agenda Surat Masuk & Surat Keluar</h2>
+                        <p class="text-xs text-slate-500">Pencatatan dan digitalisasi arsip persuratan sekolah</p>
+                    </div>
+                    <button onclick="openModalSurat()" class="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition w-full sm:w-auto justify-center">
+                        <i class="fa-solid fa-plus"></i> Catat Surat Baru
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="p-4 border-b border-slate-100 flex flex-col sm:flex-row gap-3 justify-between">
+                        <div class="flex gap-2">
+                            <button onclick="filterSuratType('ALL')" id="btnFilterSuratAll" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-brand-600 text-white">Semua</button>
+                            <button onclick="filterSuratType('MASUK')" id="btnFilterSuratMasuk" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 text-slate-600">Surat Masuk</button>
+                            <button onclick="filterSuratType('KELUAR')" id="btnFilterSuratKeluar" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 text-slate-600">Surat Keluar</button>
+                        </div>
+                        <input type="text" id="searchSurat" onkeyup="renderSurat()" placeholder="Cari nomor, pengirim, perihal..." class="px-3 py-2 border rounded-lg text-sm w-full sm:w-64 focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm text-slate-600">
+                            <thead class="bg-slate-50 text-slate-700 text-xs uppercase font-semibold">
+                                <tr>
+                                    <th class="p-4">Jenis</th>
+                                    <th class="p-4">No. Surat & Tgl</th>
+                                    <th class="p-4">Pengirim / Tujuan</th>
+                                    <th class="p-4">Perihal</th>
+                                    <th class="p-4">Disposisi</th>
+                                    <th class="p-4 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableSuratBody" class="divide-y divide-slate-100">
+                                <!-- Dynamic Items -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. PROGRAM KERJA (RKAS) VIEW -->
+            <section id="view-program" class="hidden space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800">Program Kerja & Monitoring RKAS</h2>
+                        <p class="text-xs text-slate-500">Perencanaan dan pemantauan keterlaksanaan program sekolah</p>
+                    </div>
+                    <button onclick="openModalProgram()" class="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition w-full sm:w-auto justify-center">
+                        <i class="fa-solid fa-plus"></i> Tambah Program Kerja
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="programGrid">
+                    <!-- Dynamic Program Cards Injected Here -->
+                </div>
+            </section>
+
+            <!-- 5. AGENDA VIEW -->
+            <section id="view-agenda" class="hidden space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800">Agenda & Jadwal Kegiatan Kepala Sekolah</h2>
+                        <p class="text-xs text-slate-500">Manajemen kegiatan harian, rapat, dan dinas luar</p>
+                    </div>
+                    <button onclick="openModalAgenda()" class="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition w-full sm:w-auto justify-center">
+                        <i class="fa-solid fa-plus"></i> Tambah Agenda
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+                    <div id="agendaList" class="space-y-4">
+                        <!-- Dynamic Agenda Cards -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- 6. ARSIP DOKUMEN & FILE (IndexedDB) VIEW -->
+            <section id="view-arsip" class="hidden space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800">Manajemen File & Arsip Digital (Database Lokal)</h2>
+                        <p class="text-xs text-slate-500">Simpan dokumen penting (PDF, Gambar, Word) langsung di database memori perangkat Anda</p>
+                    </div>
+                    <button onclick="openModalFileUpload()" class="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition w-full sm:w-auto justify-center">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Upload Dokumen Ke DB
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" id="arsipGrid">
+                        <!-- File Cards Injected -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- 7. PENGATURAN PROFIL & SEKOLAH VIEW -->
+            <section id="view-pengaturan" class="hidden space-y-6">
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm max-w-2xl mx-auto">
+                    <h2 class="text-xl font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100">Profil & Identitas Sekolah</h2>
+                    
+                    <form id="formPengaturan" onsubmit="savePengaturan(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Nama Kepala Sekolah</label>
+                            <input type="text" id="cfgHeadmaster" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">NIP Kepala Sekolah</label>
+                            <input type="text" id="cfgNip" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Nama Sekolah</label>
+                            <input type="text" id="cfgSchool" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">NPSN / Alamat Sekolah</label>
+                            <input type="text" id="cfgAddress" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                        </div>
+                        <div class="pt-4 flex justify-end">
+                            <button type="submit" class="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition shadow">
+                                Simpan Perubahan
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- MODAL CONTAINERS -->
+
+    <!-- Modal Supervisi -->
+    <div id="modalSupervisi" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl relative animate-fade-in max-h-[90vh] overflow-y-auto">
+            <h3 class="text-lg font-bold text-slate-800 mb-4">Input Hasil Supervisi Guru</h3>
+            <form id="formSupervisi" onsubmit="saveSupervisi(event)" class="space-y-3">
+                <div>
+                    <label class="text-xs font-semibold text-slate-700">Tanggal Supervisi</label>
+                    <input type="date" id="supTanggal" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-700">Nama Guru</label>
+                    <input type="text" id="supNama" placeholder="Contoh: Budi Santoso, S.Pd" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-700">Mata Pelajaran & Kelas</label>
+                    <input type="text" id="supMapel" placeholder="Contoh: Matematika - Kelas 5A" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-700">Nilai / Skor Kinerja (1 - 100)</label>
+                    <input type="number" min="1" max="100" id="supSkor" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-700">Catatan & Rekomendasi Kepala Sekolah</label>
+                    <textarea id="supCatatan" rows="3" placeholder="Masukan saran atau tindak lanjut..." class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none"></textarea>
+                </div>
+                <div class="flex justify-end space-x-2 pt-3">
+                    <button type="button" onclick="closeModal('modalSupervisi')" class="px-4 py-2 border rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100">Batal</button>
+                    <button type="submit" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-xs font-semibold">Simpan Data</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Surat -->
+    <div id="modalSurat" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl relative animate-fade-in max-h-[90vh] overflow-y-auto">
+            <h3 class="text-lg font-bold text-slate-800 mb-4">Pencatatan Surat Masuk / Keluar</h3>
+            <form id="formSurat" onsubmit="saveSurat(event)" class="space-y-3">
+                <div>
+                    <label class="text-xs font-semibold text-slate-700">Jenis Surat</label>
+                    <select id="srtJenis" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                        <option value="MASUK">Surat Masuk</option>
+                        <option value="KELUAR">Surat Keluar</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-xs font-semibold text-slate-700">Nomor Surat</label>
+                        <input type="text" id="srtNomor" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-slate-700">Tanggal Surat</label>
+                        <input type="date" id="srtTanggal" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-700">Pengirim / Tujuan</label>
+                    <input type="text" id="srtPihak" placeholder="Dinas Pendidikan / Instansi X" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-700">Perihal / Isi Ringkas</label>
+                    <input type="text" id="srtPerihal" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-700">Disposisi / Catatan Instruksi</label>
+                    <textarea id="srtDisposisi" rows="2" placeholder="Instruksi tindak lanjut kepala sekolah..." class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none"></textarea>
+                </div>
+                <div class="flex justify-end space-x-2 pt-3">
+                    <button type="button" onclick="closeModal('modalSurat')" class="px-4 py-2 border rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100">Batal</button>
+                    <button type="submit" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-xs font-semibold">Simpan Surat</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Program Kerja -->
+    <div id="modalProgram" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl relative animate-fade-in max-h-[90vh] overflow-y-auto">
+            <h3 class="text-lg font-bold text-slate-800 mb-4">Program Kerja & Kegiatan RKAS</h3>
+            <form id="formProgram" onsubmit="saveProgram(event)" class="space-y-3">
+                <div>
+                    <label class="text-xs font-semibold text-slate-700">Nama Program / Kegiatan</label>
+                    <input type="text" id="prgNama" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-700">Kategori Standar</label>
+                    <select id="prgKategori" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                        <option value="Pengembangan Kurikulum">Pengembangan Kurikulum</option>
+                        <option value="Sarana & Prasarana">Sarana & Prasarana</option>
+                        <option value="Ketenaga Kependidikan">Ketenaga Kependidikan</option>
+                        <option value="Kesiswaan & Ekstra">Kesiswaan & Ekstra</option>
+                        <option value="Pembiayaan & Manajemen">Pembiayaan & Manajemen</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-700">Estimasi Anggaran (Rp)</label>
+                    <input type="number" id="prgAnggaran" placeholder="0" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-700">Status Keterlaksanaan</label>
+                    <select id="prgStatus" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                        <option value="Belum">Belum Dimulai</option>
+                        <option value="Progres">Dalam Proses</option>
+                        <option value="Selesai">Selesai / Terlaksana</option>
+                    </select>
+                </div>
+                <div class="flex justify-end space-x-2 pt-3">
+                    <button type="button" onclick="closeModal('modalProgram')" class="px-4 py-2 border rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100">Batal</button>
+                    <button type="submit" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-xs font-semibold">Simpan Program</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Agenda -->
+    <div id="modalAgenda" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl relative animate-fade-in max-h-[90vh] overflow-y-auto">
+            <h3 class="text-lg font-bold text-slate-800 mb-4">Tambah Agenda Kegiatan</h3>
+            <form id="formAgenda" onsubmit="saveAgenda(event)" class="space-y-3">
+                <div>
+                    <label class="text-xs font-semibold text-slate-700">Judul Kegiatan</label>
+                    <input type="text" id="agdJudul" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-xs font-semibold text-slate-700">Tanggal</label>
+                        <input type="date" id="agdTanggal" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-slate-700">Waktu</label>
+                        <input type="time" id="agdWaktu" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-700">Lokasi / Tempat</label>
+                    <input type="text" id="agdLokasi" placeholder="Ruang Rapat / Dinas Pendidikan..." required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-700">Keterangan Tambahan</label>
+                    <textarea id="agdKet" rows="2" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none"></textarea>
+                </div>
+                <div class="flex justify-end space-x-2 pt-3">
+                    <button type="button" onclick="closeModal('modalAgenda')" class="px-4 py-2 border rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100">Batal</button>
+                    <button type="submit" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-xs font-semibold">Simpan Agenda</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Upload File / IndexedDB -->
+    <div id="modalFileUpload" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl relative animate-fade-in">
+            <h3 class="text-lg font-bold text-slate-800 mb-4">Upload Dokumen Ke Storage Lokal (IndexedDB)</h3>
+            <form id="formFile" onsubmit="saveFileToIndexedDB(event)" class="space-y-4">
+                <div>
+                    <label class="text-xs font-semibold text-slate-700">Kategori File</label>
+                    <select id="fileKategori" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                        <option value="SK & Legality">SK & Legalitas Sekolah</option>
+                        <option value="Kurikulum & Perangkat">Kurikulum & Perangkat Ajar</option>
+                        <option value="Laporan Keuangan">Laporan Keuangan / BOS</option>
+                        <option value="Sertifikat & Penghargaan">Sertifikat & Penghargaan</option>
+                        <option value="Dokumen Lainnya">Dokumen Lainnya</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-700">Pilih Berkas File (PDF, Word, Image)</label>
+                    <input type="file" id="fileInput" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none bg-slate-50">
+                    <p class="text-[10px] text-slate-400 mt-1">*File disimpan langsung di ruang penyimpanan internal browser perangkat Anda.</p>
+                </div>
+                <div class="flex justify-end space-x-2 pt-3">
+                    <button type="button" onclick="closeModal('modalFileUpload')" class="px-4 py-2 border rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100">Batal</button>
+                    <button type="submit" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-xs font-semibold">Upload & Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- NOTIFICATION / TOAST -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 hidden bg-slate-800 text-white px-4 py-3 rounded-xl shadow-xl flex items-center space-x-3 text-sm">
+        <i class="fa-solid fa-circle-check text-emerald-400 text-lg" id="toastIcon"></i>
+        <span id="toastMsg">Pesan sukses disini</span>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC & LOCAL DATABASE ENGINE -->
+    <script>
+        /* ==========================================================================
+           1. DATABASE LOCAL ENGINE & OFFLINE CAPABILITIES
+           ========================================================================== */
+
+        // Offline Capabilities Setup
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+
+        function updateOnlineStatus() {
+            const statusBadge = document.getElementById('dbStatus');
+            if (navigator.onLine) {
+                statusBadge.innerText = 'Online / Offline Ready';
+                statusBadge.className = 'font-semibold text-emerald-600';
+            } else {
+                statusBadge.innerText = 'Modus Offline (Tersimpan Lokal)';
+                statusBadge.className = 'font-semibold text-amber-600';
+            }
+        }
+
+        // IndexedDB Initialization for files
+        const DB_NAME = 'SI_AKS_Database';
+        const DB_VERSION = 1;
+        let db;
+
+        function initIndexedDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onupgradeneeded = (e) => {
+                    db = e.target.result;
+                    if (!db.objectStoreNames.contains('files')) {
+                        db.createObjectStore('files', { keyPath: 'id' });
+                    }
+                };
+                request.onsuccess = (e) => {
+                    db = e.target.result;
+                    resolve(db);
+                };
+                request.onerror = (e) => {
+                    console.error("IndexedDB Error:", e);
+                    reject(e);
+                };
+            });
+        }
+
+        // Local Storage Default Data Hydration
+        const defaultSettings = {
+            headmaster: "Dr. H. Ahmad Wijaya, M.Pd.",
+            nip: "19750812 200003 1 004",
+            school: "SD Negeri Nusantara 01",
+            address: "Jl. Pendidikan No. 45, Jakarta Pusat"
+        };
+
+        function getStorage(key, fallback) {
+            const data = localStorage.getItem('SI_AKS_' + key);
+            return data ? JSON.parse(data) : fallback;
+        }
+
+        function setStorage(key, value) {
+            localStorage.setItem('SI_AKS_' + key, JSON.stringify(value));
+        }
+
+        // State Store
+        let appState = {
+            supervisi: getStorage('supervisi', []),
+            surat: getStorage('surat', []),
+            program: getStorage('program', []),
+            agenda: getStorage('agenda', []),
+            settings: getStorage('settings', defaultSettings),
+            isLoggedIn: getStorage('isLoggedIn', false),
+            suratFilter: 'ALL'
+        };
+
+        /* ==========================================================================
+           AUTHENTICATION SYSTEM (USER & NIP SYNC)
+           ========================================================================== */
+
+        function checkAuth() {
+            const loginScreen = document.getElementById('loginScreen');
+            document.getElementById('defaultUserHint').innerText = appState.settings.headmaster;
+            document.getElementById('defaultPassHint').innerText = appState.settings.nip || '(Kosongkan)';
+
+            if (appState.isLoggedIn) {
+                loginScreen.classList.add('hidden');
+            } else {
+                loginScreen.classList.remove('hidden');
+            }
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const userInput = document.getElementById('loginUsername').value.trim();
+            const passInput = document.getElementById('loginPassword').value.trim();
+
+            const validUser = appState.settings.headmaster.trim();
+            const validPass = (appState.settings.nip || '').trim();
+
+            if (userInput.toLowerCase() === validUser.toLowerCase() && passInput === validPass) {
+                appState.isLoggedIn = true;
+                setStorage('isLoggedIn', true);
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('formLogin').reset();
+                showToast('Berhasil masuk! Selamat bekerja.');
+            } else {
+                showToast('Nama Lengkap atau NIP tidak sesuai dengan data pengguna!', 'error');
+            }
+        }
+
+        function logout() {
+            appState.isLoggedIn = false;
+            setStorage('isLoggedIn', false);
+            checkAuth();
+            showToast('Anda telah keluar aplikasi');
+        }
+
+        /* ==========================================================================
+           2. UI & NAVIGATION CONTROLLER
+           ========================================================================== */
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initIndexedDB();
+            setupMobileMenu();
+            renderPengaturanForm();
+            renderAllViews();
+            initChart();
+            checkAuth();
+            updateOnlineStatus();
+        });
+
+        function setupMobileMenu() {
+            const btn = document.getElementById('mobileMenuBtn');
+            const closeBtn = document.getElementById('closeMobileMenu');
+            const sidebar = document.getElementById('sidebar');
+
+            btn.addEventListener('click', () => {
+                sidebar.classList.remove('-translate-x-full');
+            });
+            closeBtn.addEventListener('click', () => {
+                sidebar.classList.add('-translate-x-full');
+            });
+        }
+
+        function switchTab(tabId) {
+            // Hide all views
+            const views = document.querySelectorAll('main > section');
+            views.forEach(v => v.classList.add('hidden'));
+
+            // Show current view
+            const activeView = document.getElementById('view-' + tabId);
+            if (activeView) activeView.classList.remove('hidden');
+
+            // Update Navigation Styles
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => {
+                item.classList.remove('bg-brand-50', 'text-brand-700');
+                item.classList.add('text-slate-600');
+            });
+
+            const currentNav = document.getElementById('nav-' + tabId);
+            if (currentNav) {
+                currentNav.classList.add('bg-brand-50', 'text-brand-700');
+                currentNav.classList.remove('text-slate-600');
+            }
+
+            // Close mobile menu on click
+            document.getElementById('sidebar').classList.add('-translate-x-full');
+
+            // Refresh specific views if needed
+            if(tabId === 'arsip') renderArsipFiles();
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMsg');
+            const toastIcon = document.getElementById('toastIcon');
+
+            toastMsg.innerText = message;
+            if(type === 'success') {
+                toastIcon.className = "fa-solid fa-circle-check text-emerald-400 text-lg";
+            } else {
+                toastIcon.className = "fa-solid fa-circle-exclamation text-amber-400 text-lg";
+            }
+
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3000);
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+        }
+
+        /* ==========================================================================
+           3. SUPERVISI GURU MODULE
+           ========================================================================== */
+
+        function openModalSupervisi() {
+            document.getElementById('formSupervisi').reset();
+            openModal('modalSupervisi');
+        }
+
+        function saveSupervisi(e) {
+            e.preventDefault();
+            const data = {
+                id: Date.now(),
+                tanggal: document.getElementById('supTanggal').value,
+                nama: document.getElementById('supNama').value,
+                mapel: document.getElementById('supMapel').value,
+                skor: parseInt(document.getElementById('supSkor').value),
+                catatan: document.getElementById('supCatatan').value
+            };
+
+            appState.supervisi.unshift(data);
+            setStorage('supervisi', appState.supervisi);
+            closeModal('modalSupervisi');
+            renderSupervisi();
+            updateDashboardStats();
+            updateChart();
+            showToast('Hasil supervisi berhasil disimpan!');
+        }
+
+        function deleteSupervisi(id) {
+            appState.supervisi = appState.supervisi.filter(item => item.id !== id);
+            setStorage('supervisi', appState.supervisi);
+            renderSupervisi();
+            updateDashboardStats();
+            updateChart();
+            showToast('Data supervisi berhasil dihapus');
+        }
+
+        function getPredikat(skor) {
+            if (skor >= 90) return { label: 'A (Sangat Baik)', color: 'bg-emerald-100 text-emerald-800' };
+            if (skor >= 80) return { label: 'B (Baik)', color: 'bg-blue-100 text-blue-800' };
+            if (skor >= 70) return { label: 'C (Cukup)', color: 'bg-amber-100 text-amber-800' };
+            return { label: 'D (Perlu Bimbingan)', color: 'bg-rose-100 text-rose-800' };
+        }
+
+        function renderSupervisi() {
+            const tbody = document.getElementById('tableSupervisiBody');
+            const search = document.getElementById('searchSupervisi').value.toLowerCase();
+            
+            const filtered = appState.supervisi.filter(item => 
+                item.nama.toLowerCase().includes(search) || item.mapel.toLowerCase().includes(search)
+            );
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400 italic">Belum ada data supervisi.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(item => {
+                const pred = getPredikat(item.skor);
+                return `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="p-4">${item.tanggal}</td>
+                        <td class="p-4 font-semibold text-slate-800">${item.nama}</td>
+                        <td class="p-4">${item.mapel}</td>
+                        <td class="p-4">
+                            <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${pred.color}">
+                                ${item.skor} - ${pred.label}
+                            </span>
+                        </td>
+                        <td class="p-4 text-xs max-w-xs truncate">${item.catatan || '-'}</td>
+                        <td class="p-4 text-center">
+                            <button onclick="deleteSupervisi(${item.id})" class="text-rose-500 hover:text-rose-700 p-1">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        /* ==========================================================================
+           4. SURAT MASUK & KELUAR MODULE
+           ========================================================================== */
+
+        function openModalSurat() {
+            document.getElementById('formSurat').reset();
+            openModal('modalSurat');
+        }
+
+        function filterSuratType(type) {
+            appState.suratFilter = type;
+            ['All', 'Masuk', 'Keluar'].forEach(t => {
+                const btn = document.getElementById('btnFilterSurat' + t);
+                if(t.toUpperCase() === type) {
+                    btn.className = "px-3 py-1.5 text-xs font-semibold rounded-lg bg-brand-600 text-white";
+                } else {
+                    btn.className = "px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 text-slate-600";
+                }
+            });
+            renderSurat();
+        }
+
+        function saveSurat(e) {
+            e.preventDefault();
+            const data = {
+                id: Date.now(),
+                jenis: document.getElementById('srtJenis').value,
+                nomor: document.getElementById('srtNomor').value,
+                tanggal: document.getElementById('srtTanggal').value,
+                pihak: document.getElementById('srtPihak').value,
+                perihal: document.getElementById('srtPerihal').value,
+                disposisi: document.getElementById('srtDisposisi').value
+            };
+
+            appState.surat.unshift(data);
+            setStorage('surat', appState.surat);
+            closeModal('modalSurat');
+            renderSurat();
+            updateDashboardStats();
+            showToast('Surat berhasil teragenda!');
+        }
+
+        function deleteSurat(id) {
+            appState.surat = appState.surat.filter(i => i.id !== id);
+            setStorage('surat', appState.surat);
+            renderSurat();
+            updateDashboardStats();
+            showToast('Surat dihapus');
+        }
+
+        function renderSurat() {
+            const tbody = document.getElementById('tableSuratBody');
+            const search = document.getElementById('searchSurat').value.toLowerCase();
+
+            let filtered = appState.surat;
+
+            if(appState.suratFilter !== 'ALL') {
+                filtered = filtered.filter(s => s.jenis === appState.suratFilter);
+            }
+
+            filtered = filtered.filter(s => 
+                s.nomor.toLowerCase().includes(search) || 
+                s.pihak.toLowerCase().includes(search) ||
+                s.perihal.toLowerCase().includes(search)
+            );
+
+            if(filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400 italic">Belum ada agenda surat.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(item => {
+                const isMasuk = item.jenis === 'MASUK';
+                const badge = isMasuk 
+                    ? `<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px] font-bold">MASUK</span>`
+                    : `<span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-[10px] font-bold">KELUAR</span>`;
+
+                return `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="p-4">${badge}</td>
+                        <td class="p-4 font-mono text-xs">
+                            <div class="font-bold text-slate-800">${item.nomor}</div>
+                            <div class="text-slate-400 text-[10px]">${item.tanggal}</div>
+                        </td>
+                        <td class="p-4 font-medium text-slate-700">${item.pihak}</td>
+                        <td class="p-4 text-slate-600">${item.perihal}</td>
+                        <td class="p-4 text-xs italic bg-slate-50/50">${item.disposisi || '-'}</td>
+                        <td class="p-4 text-center">
+                            <button onclick="deleteSurat(${item.id})" class="text-rose-500 hover:text-rose-700 p-1">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        /* ==========================================================================
+           5. PROGRAM KERJA (RKAS) MODULE
+           ========================================================================== */
+
+        function openModalProgram() {
+            document.getElementById('formProgram').reset();
+            openModal('modalProgram');
+        }
+
+        function saveProgram(e) {
+            e.preventDefault();
+            const data = {
+                id: Date.now(),
+                nama: document.getElementById('prgNama').value,
+                kategori: document.getElementById('prgKategori').value,
+                anggaran: parseInt(document.getElementById('prgAnggaran').value) || 0,
+                status: document.getElementById('prgStatus').value
+            };
+
+            appState.program.unshift(data);
+            setStorage('program', appState.program);
+            closeModal('modalProgram');
+            renderProgram();
+            updateDashboardStats();
+            showToast('Program kerja berhasil ditambahkan');
+        }
+
+        function deleteProgram(id) {
+            appState.program = appState.program.filter(p => p.id !== id);
+            setStorage('program', appState.program);
+            renderProgram();
+            updateDashboardStats();
+            showToast('Program dihapus');
+        }
+
+        function renderProgram() {
+            const grid = document.getElementById('programGrid');
+
+            if(appState.program.length === 0) {
+                grid.innerHTML = `<p class="col-span-full text-center text-slate-400 italic py-8">Belum ada program kerja yang diinputkan.</p>`;
+                return;
+            }
+
+            grid.innerHTML = appState.program.map(p => {
+                let statusBadge = '';
+                if(p.status === 'Selesai') statusBadge = '<span class="bg-emerald-100 text-emerald-800 px-2 py-1 rounded text-xs font-semibold">Selesai</span>';
+                else if(p.status === 'Progres') statusBadge = '<span class="bg-amber-100 text-amber-800 px-2 py-1 rounded text-xs font-semibold">Progres</span>';
+                else statusBadge = '<span class="bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs font-semibold">Belum</span>';
+
+                return `
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-[10px] uppercase font-bold text-brand-600 bg-brand-50 px-2 py-0.5 rounded">${p.kategori}</span>
+                                ${statusBadge}
+                            </div>
+                            <h4 class="font-bold text-slate-800 text-base mb-2">${p.nama}</h4>
+                            <p class="text-xs text-slate-500 mb-4">Estimasi Budget: <span class="font-semibold text-slate-700">Rp ${p.anggaran.toLocaleString('id-ID')}</span></p>
+                        </div>
+                        <div class="pt-3 border-t border-slate-100 flex justify-end">
+                            <button onclick="deleteProgram(${p.id})" class="text-xs text-rose-500 hover:text-rose-700 font-medium">
+                                <i class="fa-solid fa-trash mr-1"></i>Hapus
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        /* ==========================================================================
+           6. AGENDA MODULE
+           ========================================================================== */
+
+        function openModalAgenda() {
+            document.getElementById('formAgenda').reset();
+            openModal('modalAgenda');
+        }
+
+        function saveAgenda(e) {
+            e.preventDefault();
+            const data = {
+                id: Date.now(),
+                judul: document.getElementById('agdJudul').value,
+                tanggal: document.getElementById('agdTanggal').value,
+                waktu: document.getElementById('agdWaktu').value,
+                lokasi: document.getElementById('agdLokasi').value,
+                ket: document.getElementById('agdKet').value
+            };
+
+            appState.agenda.unshift(data);
+            // Sort by date
+            appState.agenda.sort((a,b) => new Date(a.tanggal) - new Date(b.tanggal));
+            
+            setStorage('agenda', appState.agenda);
+            closeModal('modalAgenda');
+            renderAgenda();
+            renderDashboardAgenda();
+            showToast('Agenda berhasil diset');
+        }
+
+        function deleteAgenda(id) {
+            appState.agenda = appState.agenda.filter(a => a.id !== id);
+            setStorage('agenda', appState.agenda);
+            renderAgenda();
+            renderDashboardAgenda();
+            showToast('Agenda dihapus');
+        }
+
+        function renderAgenda() {
+            const list = document.getElementById('agendaList');
+
+            if(appState.agenda.length === 0) {
+                list.innerHTML = `<p class="text-center text-slate-400 italic py-6">Belum ada agenda jadwal mendatang.</p>`;
+                return;
+            }
+
+            list.innerHTML = appState.agenda.map(a => `
+                <div class="flex items-start justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
+                    <div class="flex items-start space-x-3">
+                        <div class="bg-brand-600 text-white rounded-lg p-2 text-center min-w-[55px]">
+                            <span class="block text-xs font-light uppercase">${new Date(a.tanggal).toLocaleString('id-ID', { month: 'short' })}</span>
+                            <span class="block text-lg font-bold leading-none">${new Date(a.tanggal).getDate()}</span>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-sm">${a.judul}</h4>
+                            <p class="text-xs text-slate-500 mt-0.5"><i class="fa-regular fa-clock mr-1"></i>${a.waktu} WIB | <i class="fa-solid fa-location-dot mr-1"></i>${a.lokasi}</p>
+                            ${a.ket ? `<p class="text-xs text-slate-600 mt-2 bg-white p-2 rounded border border-slate-200">${a.ket}</p>` : ''}
+                        </div>
+                    </div>
+                    <button onclick="deleteAgenda(${a.id})" class="text-rose-500 hover:text-rose-700 p-1">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        /* ==========================================================================
+           7. ARSIP DOKUMEN (IndexedDB Systems)
+           ========================================================================== */
+
+        function openModalFileUpload() {
+            document.getElementById('formFile').reset();
+            openModal('modalFileUpload');
+        }
+
+        function saveFileToIndexedDB(e) {
+            e.preventDefault();
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            const kategori = document.getElementById('fileKategori').value;
+
+            if(!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const fileData = {
+                    id: Date.now(),
+                    name: file.name,
+                    size: (file.size / 1024).toFixed(1) + ' KB',
+                    type: file.type,
+                    kategori: kategori,
+                    content: event.target.result, // Base64 content stored locally
+                    uploadedAt: new Date().toLocaleDateString('id-ID')
+                };
+
+                const transaction = db.transaction(['files'], 'readwrite');
+                const store = transaction.objectStore('files');
+                store.add(fileData);
+
+                transaction.oncomplete = () => {
+                    closeModal('modalFileUpload');
+                    renderArsipFiles();
+                    updateDashboardStats();
+                    showToast('Dokumen tersimpan aman di Database Lokal!');
+                };
+            };
+
+            reader.readAsDataURL(file);
+        }
+
+        function renderArsipFiles() {
+            const grid = document.getElementById('arsipGrid');
+            if(!db) return;
+
+            const transaction = db.transaction(['files'], 'readonly');
+            const store = transaction.objectStore('files');
+            const request = store.getAll();
+
+            request.onsuccess = () => {
+                const files = request.result;
+
+                if(files.length === 0) {
+                    grid.innerHTML = `<p class="col-span-full text-center text-slate-400 italic py-8">Belum ada berkas tersimpan di database lokal.</p>`;
+                    return;
+                }
+
+                grid.innerHTML = files.map(f => {
+                    let icon = 'fa-file-pdf text-rose-500';
+                    if(f.type.includes('image')) icon = 'fa-file-image text-emerald-500';
+                    if(f.type.includes('word') || f.name.endsWith('.doc') || f.name.endsWith('.docx')) icon = 'fa-file-word text-blue-500';
+
+                    return `
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col justify-between hover:shadow-md transition">
+                            <div class="flex items-start space-x-3 mb-3">
+                                <i class="fa-solid ${icon} text-3xl"></i>
+                                <div class="min-w-0 flex-1">
+                                    <h5 class="font-bold text-slate-800 text-xs truncate" title="${f.name}">${f.name}</h5>
+                                    <span class="text-[10px] text-brand-600 bg-brand-50 px-1.5 py-0.5 rounded font-medium">${f.kategori}</span>
+                                    <p class="text-[10px] text-slate-400 mt-1">${f.size} | ${f.uploadedAt}</p>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center pt-2 border-t border-slate-200 text-xs">
+                                <a href="${f.content}" download="${f.name}" class="text-brand-600 hover:underline font-semibold flex items-center gap-1">
+                                    <i class="fa-solid fa-download"></i> Unduh
+                                </a>
+                                <button onclick="deleteFileFromIndexedDB(${f.id})" class="text-rose-500 hover:text-rose-700">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            };
+        }
+
+        function deleteFileFromIndexedDB(id) {
+            const transaction = db.transaction(['files'], 'readwrite');
+            const store = transaction.objectStore('files');
+            store.delete(id);
+            transaction.oncomplete = () => {
+                renderArsipFiles();
+                updateDashboardStats();
+                showToast('Berkas berhasil dihapus');
+            };
+        }
+
+        /* ==========================================================================
+           8. PENGATURAN PROFIL
+           ========================================================================== */
+
+        function renderPengaturanForm() {
+            const cfg = appState.settings;
+            document.getElementById('cfgHeadmaster').value = cfg.headmaster || '';
+            document.getElementById('cfgNip').value = cfg.nip || '';
+            document.getElementById('cfgSchool').value = cfg.school || '';
+            document.getElementById('cfgAddress').value = cfg.address || '';
+
+            // Update UI components
+            document.getElementById('headerHeadmasterName').innerText = cfg.headmaster || 'Kepala Sekolah';
+            document.getElementById('welcomeHeading').innerText = `Selamat Datang, ${cfg.headmaster || 'Kepala Sekolah'}`;
+            document.getElementById('dashSchoolName').innerText = cfg.school || 'SDN Nusantara 01';
+
+            // Sync Login hints
+            document.getElementById('defaultUserHint').innerText = cfg.headmaster;
+            document.getElementById('defaultPassHint').innerText = cfg.nip || '(Kosongkan)';
+        }
+
+        function savePengaturan(e) {
+            e.preventDefault();
+            appState.settings = {
+                headmaster: document.getElementById('cfgHeadmaster').value,
+                nip: document.getElementById('cfgNip').value,
+                school: document.getElementById('cfgSchool').value,
+                address: document.getElementById('cfgAddress').value
+            };
+
+            setStorage('settings', appState.settings);
+            renderPengaturanForm();
+            showToast('Profil diperbarui! Password/NIP login juga telah disingkronkan.');
+        }
+
+        function savePengaturan(e) {
+            e.preventDefault();
+            appState.settings = {
+                headmaster: document.getElementById('cfgHeadmaster').value,
+                nip: document.getElementById('cfgNip').value,
+                school: document.getElementById('cfgSchool').value,
+                address: document.getElementById('cfgAddress').value
+            };
+
+            setStorage('settings', appState.settings);
+            renderPengaturanForm();
+            showToast('Profil & Identitas Sekolah diperbarui!');
+        }
+
+        /* ==========================================================================
+           9. DASHBOARD RENDER & CHART SYSTEM
+           ========================================================================== */
+
+        let chartInstance = null;
+
+        function initChart() {
+            const ctx = document.getElementById('chartSupervisiCanvas').getContext('2d');
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Nilai Supervisi Guru',
+                        data: [],
+                        backgroundColor: '#3b82f6',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, max: 100 }
+                    }
+                }
+            });
+            updateChart();
+        }
+
+        function updateChart() {
+            if (!chartInstance) return;
+            const supervisiData = appState.supervisi.slice(0, 7).reverse(); // 7 data terbaru
+            chartInstance.data.labels = supervisiData.map(s => s.nama.split(' ')[0]);
+            chartInstance.data.datasets[0].data = supervisiData.map(s => s.skor);
+            chartInstance.update();
+        }
+
+        function renderDashboardAgenda() {
+            const container = document.getElementById('dashAgendaList');
+            const upcoming = appState.agenda.slice(0, 4);
+
+            if (upcoming.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-400 italic">Belum ada agenda terdekat.</p>`;
+                return;
+            }
+
+            container.innerHTML = upcoming.map(a => `
+                <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-100 flex justify-between items-center">
+                    <div>
+                        <h5 class="text-xs font-bold text-slate-800">${a.judul}</h5>
+                        <p class="text-[10px] text-slate-500">${a.tanggal} | ${a.waktu} WIB</p>
+                    </div>
+                    <span class="text-[10px] bg-brand-100 text-brand-800 px-2 py-0.5 rounded font-medium">${a.lokasi}</span>
+                </div>
+            `).join('');
+        }
+
+        function updateDashboardStats() {
+            document.getElementById('statSupervisi').innerText = appState.supervisi.length;
+            document.getElementById('statSurat').innerText = appState.surat.length;
+            document.getElementById('statProgram').innerText = appState.program.length;
+
+            if(db) {
+                const transaction = db.transaction(['files'], 'readonly');
+                const store = transaction.objectStore('files');
+                const countReq = store.count();
+                countReq.onsuccess = () => {
+                    document.getElementById('statFile').innerText = countReq.result;
+                };
+            }
+        }
+
+        function renderAllViews() {
+            renderSupervisi();
+            renderSurat();
+            renderProgram();
+            renderAgenda();
+            renderDashboardAgenda();
+            updateDashboardStats();
+        }
+
+        /* ==========================================================================
+           10. BACKUP & RESTORE DATA SYSTEM (JSON)
+           ========================================================================== */
+
+        function exportAllData() {
+            const backupData = {
+                supervisi: appState.supervisi,
+                surat: appState.surat,
+                program: appState.program,
+                agenda: appState.agenda,
+                settings: appState.settings,
+                exportedAt: new Date().toISOString()
+            };
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `BACKUP_SI_AKS_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+
+            showToast('Backup data berhasil diunduh!');
+        }
+
+        function importAllData(event) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if(imported.supervisi) setStorage('supervisi', imported.supervisi);
+                    if(imported.surat) setStorage('surat', imported.surat);
+                    if(imported.program) setStorage('program', imported.program);
+                    if(imported.agenda) setStorage('agenda', imported.agenda);
+                    if(imported.settings) setStorage('settings', imported.settings);
+
+                    appState.supervisi = imported.supervisi || [];
+                    appState.surat = imported.surat || [];
+                    appState.program = imported.program || [];
+                    appState.agenda = imported.agenda || [];
+                    appState.settings = imported.settings || defaultSettings;
+
+                    renderPengaturanForm();
+                    renderAllViews();
+                    updateChart();
+
+                    showToast('Data berhasil dipulihkan (Restored)!');
+                } catch(err) {
+                    showToast('File JSON tidak valid!', 'error');
+                }
+            };
+            reader.readAsText(event.target.files[0]);
+        }
+    </script>
+</body>
+</html>
